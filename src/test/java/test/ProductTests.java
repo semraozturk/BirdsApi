@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.jupiter.api.*;
 import pojo.product.Payload;
 import pojo.product.ProductApi;
@@ -17,6 +18,7 @@ import static org.hamcrest.Matchers.*;
 public class ProductTests extends BaseTest{
 
     private static long product_ID;
+    private static long variant_ID;
     ObjectMapper mapper = new ObjectMapper();
     Payload newPayload = new ProductApi().generateRandomProductPayload();
 
@@ -43,7 +45,10 @@ public class ProductTests extends BaseTest{
 
         JsonPath jsonPath = response.jsonPath();
         product_ID = jsonPath.getLong("product.id");  //storing product_id in a static = class level variable
-        System.out.println("Created a product with id  = " + product_ID);
+                 System.out.println("Created a product with id  = " + product_ID);
+
+        variant_ID = jsonPath.getLong("product.variants[0].id");
+                System.out.println("variantId = " + variant_ID);
     }
 
 
@@ -79,7 +84,7 @@ public class ProductTests extends BaseTest{
                           when()
                                     .get("admin/api/2021-07/products/" + String.valueOf(product_ID) + ".json").
                           then()
-                                    .log().body()
+                                   // .log().body()
                                     .assertThat()
                                     .statusCode(200)
                                     .body("product.status",is("active"))
@@ -90,7 +95,7 @@ public class ProductTests extends BaseTest{
       String expectedTitle = newPayload.getProduct().getTitle();
       String actualTitle = jsonPath.getString("product.title");
       Assertions.assertTrue(expectedTitle.equals(actualTitle),"Expected and actual titles do not match!");
-      System.out.println("Verified the product is displayed on the home page!");
+             System.out.println("Verified the product is displayed on the home page!");
 
     }
 
@@ -100,23 +105,25 @@ public class ProductTests extends BaseTest{
     @Test
     public void addToCart()  {
 
-        String payload = new ProductApi().getAddToCartPayload(String.valueOf(product_ID));
+        String payload = new ProductApi().getAddToCartPayload(String.valueOf(variant_ID));
+/*
         try {
             System.out.println("Add to cart payload: \n" + mapper.writeValueAsString(payload) );
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
 
-        given()
+      */  given()
                 .spec(reqSpec)
                 .body(payload).
         when()
-                .post("admin/api/2021-07/cart/add.js").
+                .post("cart/add.js").
         then()
                 .assertThat()
+                .log().body()
                 .statusCode(200);
 
-        System.out.println("Added the created product to cart");
+        System.out.println("Added the product to cart with variant id = " + variant_ID);
 
     }
 

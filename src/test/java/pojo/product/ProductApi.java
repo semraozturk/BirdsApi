@@ -16,7 +16,7 @@ public class ProductApi {
         Product product = new Product();
         String[] productTypes = {"Cardinal","Parrot","Nightingale","Falcon","Eagle"};
 
-        product.setTitle("Test Product");
+        product.setTitle("Burton Custom Freestyle 151");
         product.setBody_html("<strong> Amazing product!</strong>");
         product.setVendor(faker.company().name());
         product.setProduct_type(productTypes[faker.number().numberBetween(0,4)]);
