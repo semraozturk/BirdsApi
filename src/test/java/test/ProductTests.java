@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.jupiter.api.*;
 import pojo.product.Payload;
 import pojo.product.ProductApi;
@@ -48,7 +47,7 @@ public class ProductTests extends BaseTest{
                  System.out.println("Created a product with id  = " + product_ID);
 
         variant_ID = jsonPath.getLong("product.variants[0].id");
-                System.out.println("variantId = " + variant_ID);
+                System.out.println("variantId = " + variant_ID); //storing variant_id in a static = class level variable
     }
 
 
