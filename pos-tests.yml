@@ -1,0 +1,62 @@
+name: POS Integration Services Tests
+on:
+  schedule:
+    - cron: '*/360 * * * 1-5'
+
+jobs:
+  API-Integration-Tests:
+    env:
+      ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+      ARTIFACTORY_TOKEN: ${{ secrets.MAVEN_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      GCR_TOKEN: ${{ secrets.GCP_AUTH_SECRET }}
+      SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
+      TWISTLOCK_USER: ${{ secrets.TWISTLOCK_USER }}
+      TWISTLOCK_PASSWORD: ${{ secrets.TWISTLOCK_PASSWORD }}
+      WIZ_CLI_USER: ${{ secrets.WIZ_ID }}
+      WIZ_CLI_PASSWORD: ${{ secrets.WIZ_SECRET }}
+      JENKINS_USER: ${{ secrets.JENKINS_USER }}
+      JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
+      DOCKER_CONFIG: /root/.docker
+    runs-on: [ one-thd-onprem-np ]
+    container:
+      image: docker.artifactory.homedepot.com/com/homedepot/store-checkout/builder:2023.99.2
+      credentials:
+        username: ${{ secrets.ARTIFACTORY_USER }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Docker Login
+      uses: docker/login-action@v2
+      with:
+        registry: docker.artifactory.homedepot.com
+        username: ${{ secrets.ARTIFACTORY_USER }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+    - name: Setup Maven M2
+      run: |
+        echo "Copying Maven settings.xml and toolchains.xml to the root m2 folder."
+        mkdir /root/.m2
+        cp ./ci/settings.xml /root/.m2/settings.xml
+        cp ./ci/toolchains.xml /root/.m2/toolchains.xml
+        mvn --version
+    - name: Get Today's Date
+      id: get_today
+      run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+    - name: Restore Maven Repository from Cache
+      id: cache-restore
+      uses: actions/cache/restore@v3
+      with:
+        key: build-cache-${{ steps.get_today.outputs.today }}
+        restore-keys: |
+          build-cache-
+        path: |
+          /root/.m2/repository
+    - name: Run API integration tests
+      run: |
+        cd tests/pos-release-support
+        mvn test -DsuiteXmlFile=testng
